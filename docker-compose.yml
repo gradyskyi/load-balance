@@ -1,0 +1,58 @@
+version: '3.7'
+
+services:
+  nginx-balancer:
+    container_name: balancer
+    image: nginx:latest
+    build: ./
+    working_dir: /var/www
+    links:
+      - "nginx-uk:uk"
+      - "nginx-us:us"
+      - "nginx-default:default"
+    volumes:
+      - ./:/var/www/mp
+      - ./geo.conf:/etc/nginx/geo.conf
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - 8080:80
+    networks:
+      - internal
+
+  nginx-uk:
+    container_name: nginx-uk
+    image: nginx:latest
+    working_dir: /var/www
+    volumes:
+      - ./index.uk.html:/usr/share/nginx/html/index.html
+      - ./nginx-uk.conf:/etc/nginx/nginx.uk.conf
+    networks:
+      - internal
+
+  nginx-us:
+    container_name: nginx-us
+    image: nginx:latest
+    working_dir: /var/www
+    volumes:
+      - ./index.us.html:/usr/share/nginx/html/index.html
+      - ./nginx-us.conf:/etc/nginx/nginx.us.conf
+    networks:
+      - internal
+
+  nginx-default:
+    container_name: nginx-default
+    image: nginx:latest
+    working_dir: /var/www
+    volumes:
+      - ./index.default.html:/usr/share/nginx/html/index.html
+      - ./nginx-default.conf:/etc/nginx/nginx.us.conf
+    networks:
+      - internal
+
+networks:
+  internal:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.221.0/28
